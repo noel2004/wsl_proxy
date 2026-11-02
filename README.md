@@ -24,6 +24,18 @@ packages for the host and Windows AMD64. Transport tests cover reliability,
 flow control, timers, and stream lifecycle; no server executable exists yet. Use
 `make build-windows WINDOWS_ARCH=arm64` for a Windows ARM64 compile check.
 
+Run the configurable in-process end-to-end benchmark and client usage example:
+
+```sh
+go test -v -count=1 ./e2e-bench
+```
+
+[e2e-bench/config.json](e2e-bench/config.json) controls packet loss, Gaussian
+latency, segment sizes, and total payload volume. The standard workload verifies
+4 MiB in sequential random 4–16 KiB segments and logs speed, ACK sizes, and
+DATA resend ratios. See the [benchmark guide](e2e-bench/README.md)
+for metrics, custom profiles, and Go benchmark mode.
+
 ## Architecture
 
 ```text

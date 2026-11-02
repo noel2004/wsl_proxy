@@ -9,7 +9,7 @@ fmt:
 	$(GO) fmt ./...
 
 fmt-check:
-	@files=$$(gofmt -l client internal) || exit $$?; \
+	@files=$$(gofmt -l client internal e2e-bench) || exit $$?; \
 	if [ -n "$$files" ]; then \
 		printf 'Run make fmt for:\n%s\n' "$$files"; \
 		exit 1; \

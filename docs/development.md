@@ -21,6 +21,7 @@ encoding, lifecycle, and API are specified in [wire-v1.md](wire-v1.md).
 | `internal/server/` | Target registry, admission, connection lifecycle, and forwarding |
 | `internal/target/` | Windows resource adapters, beginning with named pipes |
 | `internal/service/` | Optional Windows Service lifecycle and logging integration |
+| `e2e-bench/` | Configurable in-process datagram network, end-to-end benchmark, and transport client usage example |
 
 The transport package contains the implementation; other package directories
 remain skeletons. The server command directory will be added with its entry point.
@@ -54,6 +55,12 @@ go test ./...
 go vet ./...
 go build ./...
 ```
+
+`go test -v -count=1 ./e2e-bench` runs the full transport over an in-process
+datagram pair with configurable random loss and Gaussian latency. Edit
+`e2e-bench/config.json`; see the [benchmark guide](../e2e-bench/README.md) for
+alternate profiles and `-bench` mode. This is a real-time performance trial;
+its simulator correctness tests use virtual time through `testing/synctest`.
 
 Use `make fmt` to format code, and `make build-windows WINDOWS_ARCH=arm64` to
 cross-compile the packages for Windows ARM64. `GO` and `WINDOWS_ARCH` are
