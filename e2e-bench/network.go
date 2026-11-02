@@ -24,6 +24,11 @@ type impairment struct {
 }
 
 func (f *impairment) sample() (drop bool, delay time.Duration) {
+	// The loopback baseline bypasses random sampling entirely. Socket copying,
+	// bounded queues, transport timers, and Go scheduling still apply.
+	if f.lossPercent == 0 && f.meanMS == 0 && f.stddevMS == 0 {
+		return false, 0
+	}
 	if f.rng.Float64()*100 < f.lossPercent {
 		return true, 0
 	}

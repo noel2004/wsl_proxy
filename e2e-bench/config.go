@@ -10,6 +10,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -26,6 +27,32 @@ type benchConfig struct {
 	SegmentMaxBytes      int     `json:"segment_max_bytes"`
 	TimeoutSeconds       float64 `json:"timeout_seconds"`
 	QueueCapacityPackets int     `json:"queue_capacity_packets"`
+}
+
+// resolveConfigPath selects an explicit file, then a flag scene, then an
+// environment scene, falling back to the original config.json. Scene names map
+// to config.<name>.json in the test working directory; full preset filenames
+// are also accepted. Arbitrary paths belong in the explicit file option.
+func resolveConfigPath(path, scene, envScene string) (string, error) {
+	if path != "" {
+		return path, nil
+	}
+	if scene == "" {
+		scene = envScene
+	}
+	if scene == "" {
+		return "config.json", nil
+	}
+	name := scene
+	if strings.HasPrefix(name, "config.") && strings.HasSuffix(name, ".json") {
+		name = strings.TrimSuffix(strings.TrimPrefix(name, "config."), ".json")
+	}
+	if name == "" || strings.ContainsFunc(name, func(r rune) bool {
+		return !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_')
+	}) {
+		return "", fmt.Errorf("invalid benchmark scene %q: use a name such as standard or config.standard.json; use -bench-config for paths", scene)
+	}
+	return "config." + name + ".json", nil
 }
 
 func loadConfig(path string) (benchConfig, error) {

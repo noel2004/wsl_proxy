@@ -58,7 +58,46 @@ or failure to finish before the deadline causes the test to fail.
 
 ## Configuration
 
-Edit [config.json](config.json), or select a separate file:
+With no selection, the runner continues to use [config.json](config.json).
+Select a preset by its scene name or its `config.<scene>.json` filename:
+
+```sh
+go test -v -count=1 ./e2e-bench -args -bench-scene=standard
+go test -v -count=1 ./e2e-bench -args -bench-scene=config.throttle.json
+E2E_BENCH_SCENE=network go test -v -count=1 ./e2e-bench
+E2E_BENCH_SCENE=limited go test -v -count=1 ./e2e-bench
+```
+
+These commands run from the repository root; omit `./e2e-bench` when running
+inside this directory. Both `TestE2E` and `BenchmarkE2E` honor scene selection.
+
+| Scene / config | One-way delay | Random loss | Seed | Trial timeout |
+| --- | --- | --- | --- | --- |
+| [standard](config.standard.json) | 0 ms | 0% | 2026110201 | 60 s |
+| [throttle](config.throttle.json) | 50 ms | 0% | 2026110202 | 180 s |
+| [network](config.network.json) | 20 ms | 3% | 2026110203 | 120 s |
+| [limited](config.limited.json) | 100 ms | 10% | 2026110204 | 300 s |
+
+All presets retain the 4 MiB workload and 4–16 KiB segments, with a different
+seed for each scene. Their latency standard deviation is zero, giving the exact
+fixed delays above; edit `latency_stddev_ms` to add Gaussian jitter. `standard`
+bypasses random impairment sampling, while retaining copying, bounded queues,
+and normal transport scheduling. `throttle` models delayed packet delivery as an
+approximation of CPU contention; it does not generate CPU load or stall WriteTo.
+`network` and `limited` model the requested intranet and edge conditions.
+
+Delay and loss apply independently in both directions. A 100 ms one-way delay
+means at least 200 ms per segment echo, so the 410-segment limited scene needs
+over 82 seconds even before loss and protocol overhead. Slower presets have
+longer whole-trial timeouts; transport retry settings remain unchanged.
+The current 30 ms initial retry interval is shorter than the round-trip delay
+of every delayed preset, so even the zero-loss throttle scene can show many
+retransmissions while ACKs are still in transit.
+
+Selection precedence is **`-bench-config` > `-bench-scene` > `E2E_BENCH_SCENE` >
+`config.json`** (empty options are treated as unset). Scene names map to
+`config.<name>.json`, so additional files follow the same convention. Unknown or
+invalid scenes fail explicitly. For arbitrary paths, use the existing file flag:
 
 ```sh
 go test -v -count=1 ./e2e-bench -args -bench-config=/absolute/path/profile.json
@@ -68,7 +107,7 @@ Relative config paths are resolved from `e2e-bench`, the test working directory.
 Unknown JSON fields, invalid ranges, and trailing JSON values are rejected. The
 segment range must allow an exact partition of the total.
 
-The standard configuration is:
+The original default `config.json` is:
 
 ```json
 {
@@ -163,7 +202,7 @@ performance results.
 
 ### Example result
 
-One measured run of the standard profile produced the following summary. These
+One measured run of the original `config.json` profile produced this summary. These
 values illustrate the log fields; they are not performance thresholds.
 
 ```text
@@ -203,8 +242,10 @@ The configured benchmark itself always uses real time.
 
 | File | Responsibility |
 | --- | --- |
-| [config.json](config.json) | Standard workload and network settings |
-| [config.go](config.go) | JSON loading and validation |
+| [config.json](config.json) | Original default workload and network settings |
+| `config.<scene>.json` | Named presets listed above |
+| [config.go](config.go) | Scene selection, JSON loading, and validation |
+| [config_test.go](config_test.go) | Selection precedence and preset stream checks |
 | [bench_test.go](bench_test.go) | Client example, echo service, test runner, and Go benchmark |
 | [segments.go](segments.go) | Seeded random segment sizing with an exact total |
 | [network.go](network.go) | In-process datagram delivery, loss, latency, and deadlines |

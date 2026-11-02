@@ -34,7 +34,9 @@ go test -v -count=1 ./e2e-bench
 latency, segment sizes, and total payload volume. The standard workload verifies
 4 MiB in sequential random 4–16 KiB segments and logs speed, ACK sizes, and
 DATA resend ratios. See the [benchmark guide](e2e-bench/README.md)
-for metrics, custom profiles, and Go benchmark mode.
+for metrics, custom profiles, and Go benchmark mode. Select the `standard`,
+`throttle`, `network`, or `limited` preset with `-args -bench-scene=network`
+or `E2E_BENCH_SCENE=network`.
 
 ## Architecture
 

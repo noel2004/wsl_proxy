@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -13,7 +14,26 @@ import (
 	"github.com/noel2004/wsl_proxy/internal/transport"
 )
 
-var configPath = flag.String("bench-config", "config.json", "path to the e2e benchmark JSON config (relative to e2e-bench unless absolute)")
+var (
+	configPath  = flag.String("bench-config", "", "explicit JSON config path; overrides -bench-scene and E2E_BENCH_SCENE")
+	configScene = flag.String("bench-scene", "", "scene name or config.<scene>.json filename; overrides E2E_BENCH_SCENE")
+)
+
+// selectedConfig is shared by the test and benchmark runners so both honor the
+// same selection rules. Log the resolved file before loading to diagnose typos.
+func selectedConfig(tb testing.TB) benchConfig {
+	tb.Helper()
+	path, err := resolveConfigPath(*configPath, *configScene, os.Getenv("E2E_BENCH_SCENE"))
+	if err != nil {
+		tb.Fatal(err)
+	}
+	tb.Logf("config=%s", path)
+	cfg, err := loadConfig(path)
+	if err != nil {
+		tb.Fatalf("load benchmark config %q: %v", path, err)
+	}
+	return cfg
+}
 
 type trialResult struct {
 	Handshake, Transfer time.Duration
@@ -177,10 +197,7 @@ func serveEcho(ctx context.Context, listener *transport.Listener, deadline time.
 // TestE2E runs with ordinary go test, including when invoked from this directory.
 // Use -v to see metrics and -count=1 to prevent Go's test-result cache hiding a run.
 func TestE2E(t *testing.T) {
-	cfg, err := loadConfig(*configPath)
-	if err != nil {
-		t.Fatal(err)
-	}
+	cfg := selectedConfig(t)
 	t.Logf("seed=%d loss=%.2f%% one-way latency=N(%.3f, %.3f²)ms (clamped at zero)", cfg.Seed, cfg.PacketLossPercent, cfg.LatencyMeanMS, cfg.LatencyStddevMS)
 	result, err := runTrial(cfg)
 	var total wireStats
@@ -206,10 +223,7 @@ func TestE2E(t *testing.T) {
 // BenchmarkE2E additionally supports go test -bench. One operation is a complete
 // trial, including setup, opening, verified transfer, EOF, and resource cleanup.
 func BenchmarkE2E(b *testing.B) {
-	cfg, err := loadConfig(*configPath)
-	if err != nil {
-		b.Fatal(err)
-	}
+	cfg := selectedConfig(b)
 	b.SetBytes(cfg.streamBytes())
 	b.ReportAllocs()
 	var handshake time.Duration

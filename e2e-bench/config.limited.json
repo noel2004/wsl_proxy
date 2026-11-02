@@ -1,0 +1,11 @@
+{
+  "seed": 2026110204,
+  "packet_loss_percent": 10,
+  "latency_mean_ms": 100,
+  "latency_stddev_ms": 0,
+  "timeout_seconds": 300,
+  "queue_capacity_packets": 4096,
+  "total_bytes": 4194304,
+  "segment_min_bytes": 4096,
+  "segment_max_bytes": 16384
+}
