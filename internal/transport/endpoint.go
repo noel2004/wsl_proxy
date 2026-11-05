@@ -357,6 +357,9 @@ func (e *endpoint) failLocked(c *Conn, err error) {
 		return
 	}
 	c.err = err
+	if c.done != nil {
+		close(c.done)
+	}
 	if c.state != nil {
 		delete(e.conns, c.state.id)
 		if e.server {
@@ -388,6 +391,9 @@ func (e *endpoint) shutdownLocked(err error) {
 	}
 	if e.dial != nil && e.dial.err == nil {
 		e.dial.err = err
+		if e.dial.done != nil {
+			close(e.dial.done)
+		}
 		e.dial.signalLocked()
 	}
 }

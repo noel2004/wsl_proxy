@@ -282,14 +282,27 @@ Wire layout, opening, EOF, backoff, keepalive advertisement, and resource admiss
 are implemented and specified in [wire-v1.md](wire-v1.md). Target names are passed
 to the accepting application; the transport does not open Windows resources.
 
-Authentication, authorization, encryption, and the server's bind-address policy
-remain application work before exposing SSH-agent access. Endpoint binding does
-not authenticate a caller. FIFO and quarantine retain the accepted stale-packet
-limitation around extreme delays, reuse, and restarts.
+The initial Windows CLI accepts only loopback binds and exposes one configured
+local byte-type named pipe. This is a trusted-host development policy, not client
+authentication: local callers share the proxy's Windows target access.
+Authentication, authorization, and encryption remain application work before
+broader deployment. Endpoint binding does not authenticate a caller. FIFO and
+quarantine retain the accepted stale-packet limitation around extreme delays,
+reuse, and restarts. See [Windows SSH-agent findings](windows-ssh-agent.md).
+
+The server separately limits active target sessions (128 by default, including
+opens in progress) and uses two bounded 32 KiB copy buffers per session in
+addition to transport windows. Unknown names, target-open failures, and server
+overload abort the stream after transport admission; OPENED is not target readiness.
+Named-pipe targets have no half-close: client FIN ends the pipe exchange. Target
+EOF queues FIN without immediately discarding pending replies; client closure or
+transport failure releases the remaining stream. Failure cancels blocked target
+I/O and pending opens. No application framing or replay is introduced.
 
 The initial implementation serializes state per endpoint and reserves payload
-budgets before admission. Scheduler scalability, Windows runtime interoperability,
-and practical maximum connection counts still need measurement.
+budgets before admission. Windows AMD64 runtime and WSL-to-1Password identity
+queries are verified; signing, scheduler scalability, and practical maximum
+connection counts still need measurement.
 
 ## Validation expectations
 

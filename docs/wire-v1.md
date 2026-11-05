@@ -158,6 +158,7 @@ reconnection or application-byte replay occurs after any failure.
 | `Conn.Read`, `Write` | Ordered stream I/O; Write copies into bounded windows |
 | `Conn.CloseWrite` | Queue reliable EOF; write deadline applies |
 | `Conn.Close` | Abort and release local resources |
+| `Conn.Done` | Channel closed on connection failure/Close; FIN alone leaves it open |
 | `SetDeadline`, `SetReadDeadline`, `SetWriteDeadline` | Change current and future I/O deadlines; zero disables |
 
 `Conn` implements `net.Conn`; `Listener` implements `net.Listener`. Socket-taking
@@ -166,6 +167,12 @@ connections may run concurrently. Writes are serialized so FIN cannot overtake
 an earlier Write. Deadline changes wake blocked operations; expiration returns
 an error matching `os.ErrDeadlineExceeded`. Partial writes report the number of
 bytes already queued, and such bytes must not be blindly replayed after failure.
+
+The public `client` package exposes `Config`, `Conn`, `DefaultConfig`, and
+`DialContext`, plus the transport's sentinel errors for use with `errors.Is`.
+Consumers do not need to import the internal transport package. `Conn.Done`
+signals abort/failure independently of I/O, allowing resource adapters to cancel
+blocked target operations; receiving FIN alone does not signal failure.
 
 An endpoint serializes state under a mutex. It has one socket reader and one
 scheduler worker. Socket writes have a configured deadline; closing the endpoint
@@ -179,6 +186,8 @@ has not yet been benchmarked.
 Deterministic state-machine tests inject packet loss, duplication, reordering,
 slow consumption, and wrapping counters with simulated time. Socket tests exercise
 opening loss, bidirectional transfer, FIN retries, deadlines, peer binding,
-admission, quarantine, concurrent connections, and shutdown on Linux loopback.
-Race detection and Windows cross-compilation supplement these checks. Actual
-WSL-to-Windows UDP and Windows named-pipe integration remain subsequent work.
+admission, quarantine, concurrent connections, and shutdown on Linux and Windows
+loopback. Race detection and AMD64/ARM64 Windows cross-compilation supplement
+these checks. Actual WSL-to-Windows UDP and 1Password named-pipe identity queries
+are verified; see [Windows SSH-agent findings](windows-ssh-agent.md) for the tested
+scope and remaining limits. The wire format is unchanged by the forwarding layer.

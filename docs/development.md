@@ -4,38 +4,38 @@
 
 The module is `github.com/noel2004/wsl_proxy`, requiring Go 1.26.0 and preferring
 the Go 1.26.10 toolchain. The transport package implements reliable UDP streams
-with deterministic state-machine tests and Linux UDP integration tests. The client
-wrapper, Windows resource adapters, service integration, and server executable
-remain unimplemented. There are no dependencies outside the standard library.
+with deterministic state-machine tests and Linux/Windows UDP integration tests.
+The public client wrapper, bounded forwarding core, Windows named-pipe adapter,
+and foreground Windows CLI are implemented. Native service integration and a
+Unix-socket application wrapper remain deferred. `golang.org/x/sys/windows`
+provides typed Win32 pipe calls; builds do not require CGO.
 
 The behavioral contract is in [protocol.md](protocol.md). The implemented wire
 encoding, lifecycle, and API are specified in [wire-v1.md](wire-v1.md).
 
-## Planned code boundaries
+## Code boundaries
 
 | Location | Responsibility |
 | --- | --- |
-| `cmd/wsl-proxy-server/` | Windows entry point, flags, configuration, and mode selection |
+| `cmd/wsl-proxy-server/` | Windows foreground entry point, flags, and configuration |
 | `client/` | Importable Go client library and connection API |
 | `internal/transport/` | Platform-independent packet codec, connection state, windows, ACKs, retries, and scheduling |
 | `internal/server/` | Target registry, admission, connection lifecycle, and forwarding |
 | `internal/target/` | Windows resource adapters, beginning with named pipes |
 | `internal/service/` | Optional Windows Service lifecycle and logging integration |
+| `internal/testpipe/` | Isolated Windows named-pipe fixtures for runtime tests |
 | `e2e-bench/` | Configurable in-process datagram network, end-to-end benchmark, and transport client usage example |
 
-The transport package contains the implementation; other package directories
-remain skeletons. The server command directory will be added with its entry point.
+Only `internal/service` remains a reserved package; no service wrapper is implemented.
 Keep the transport testable on Linux without a running Windows host. Use Windows
 build constraints or `_windows.go` files for platform-specific implementation.
 Prefer dependencies that preserve straightforward cross-compilation without
 CGO. Do not introduce KCP or QUIC as the transport without revisiting the agreed
 custom-stack decision.
 
-The server's forwarding and protocol behavior must be identical in foreground
-and service modes. A foreground server logs to stdout/stderr and handles terminal
-shutdown. Service mode adapts Service Control Manager lifecycle and selects a
-background logging destination. Service account selection affects access to
-Windows resources and remains a deployment setting.
+The foreground server logs to stdout/stderr and handles terminal shutdown. Any
+future Service Control Manager wrapper must share the forwarding core. Service
+account selection would affect resource access and remains a deployment setting.
 
 ## Build and test workflow
 
@@ -62,8 +62,9 @@ datagram pair with configurable random loss and Gaussian latency. Edit
 alternate profiles and `-bench` mode. This is a real-time performance trial;
 its simulator correctness tests use virtual time through `testing/synctest`.
 
-Use `make fmt` to format code, and `make build-windows WINDOWS_ARCH=arm64` to
-cross-compile the packages for Windows ARM64. `GO` and `WINDOWS_ARCH` are
+Use `make fmt` to format code, including files behind Windows build constraints,
+and `make build-windows WINDOWS_ARCH=arm64` to cross-compile the packages and
+executable for Windows ARM64. `GO` and `WINDOWS_ARCH` are
 overridable Make variables.
 
 Run transport tests with the race detector when the development toolchain supports
@@ -73,22 +74,27 @@ Use a simulated clock and datagram network for loss and timing cases instead
 of wall-clock sleeps. Tests must verify observable ordering, reliability,
 backpressure, and lifecycle behavior rather than mirror private helper logic.
 
-Once the server command exists, build its Windows AMD64 executable with:
+Build the Windows AMD64 executable with:
 
 ```sh
-mkdir -p bin
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o bin/wsl-proxy-server.exe ./cmd/wsl-proxy-server
+make build-windows
+./bin/wsl-proxy-server-amd64.exe -ssh-agent
 ```
 
-Use `GOARCH=arm64` for an ARM64 Windows host. This executable build command is
-for the future server entry point; current `make build-windows` only compiles
-existing packages. Windows cross-compilation does not execute Windows tests.
+Use `WINDOWS_ARCH=arm64` for an ARM64 Windows host; the artifact is then
+`bin/wsl-proxy-server-arm64.exe`. Windows cross-compilation does not execute tests.
 
 Under WSL with interop enabled, run the built Windows executable from the Linux
 shell for foreground integration testing. Test UDP communication in the actual
 mirrored-network configuration before relying on localhost connectivity. Check
-foreground operation under the launching user's Windows identity first, then
-verify service mode under its configured identity.
+foreground operation under the launching user's Windows identity.
+
+Run `make test-windows` from WSL to execute the Windows test suite through
+interop. It creates isolated named-pipe fixtures and skips the real agent unless
+explicitly selected. With the Windows CLI running, use
+`WSL_PROXY_TEST_ADDR=127.0.0.1:55222 go test -v -count=1 ./client -run TestWindowsAgentInterop`
+to request public identities through the full Linux/Windows path. See
+[Windows SSH-agent findings](windows-ssh-agent.md) for exact scope and results.
 
 ## Implementation milestones
 
@@ -96,10 +102,12 @@ verify service mode under its configured identity.
    reliable FIN, best-effort RESET, and explicit receive limits.
 2. Completed: configurable transport, deterministic fault simulation, UDP stream
    integration tests, and concurrency checks.
-3. Implement a Linux client and Windows foreground server with a controlled
-   stream target. Verify bidirectional traffic and failure propagation.
-4. Add Windows named-pipe access and verify the OpenSSH agent use case. Confirm
-   target permissions and the chosen authentication and binding policy.
+3. Completed: public client library, Windows foreground server, fixed target
+   registry, bounded forwarding, and failure propagation.
+4. Completed for local development: Windows byte-pipe adapter, custom target
+   arguments, Windows runtime tests, and actual WSL-to-1Password identity queries.
+   Only loopback binds are accepted. Authentication and broader deployment remain
+   future work; native OpenSSH runtime/signing still need verification.
 5. Add optional native service integration around the same server core.
 6. Build application wrappers on the client library, including a Unix socket
    bridge if desired.

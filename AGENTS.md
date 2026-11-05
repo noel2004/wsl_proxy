@@ -23,9 +23,10 @@ baseline deployment assumption.
 
 The module is `github.com/noel2004/wsl_proxy`, requiring Go 1.26.0 with preferred
 toolchain Go 1.26.10. `internal/transport` implements the UDP protocol, stream API,
-and deterministic and socket-level tests. Client wrappers, Windows adapters, and
-the server command remain unimplemented. Linux runtime verification and Windows
-cross-compilation do not establish Windows runtime interoperability.
+and deterministic and socket-level tests. The public `client` wrapper, bounded
+server core, Windows named-pipe adapter, and foreground Windows CLI are implemented.
+Native service integration and Unix-socket application wrappers are deferred.
+`docs/windows-ssh-agent.md` records actual Windows/WSL tests against 1Password.
 
 ## Preserve agreed decisions
 
@@ -77,9 +78,9 @@ lost ACKs, lost window updates, blocked consumers, and lifecycle failure cases.
 Use the validation expectations in the protocol as behavioral acceptance criteria.
 
 Run `make check` for formatting, vet, tests, and host and Windows AMD64 package
-builds. Use `make build-windows WINDOWS_ARCH=arm64` to check Windows ARM64. Once the
-server command exists, also cross-compile the executable. Use race detection when
-supported and appropriate. Run actual
+builds. Use `make build-windows WINDOWS_ARCH=arm64` to check Windows ARM64. These
+targets also cross-compile the executable. `make test-windows` executes Windows
+tests through WSL interop. Use race detection when supported and appropriate. Run actual
 Windows integration checks for named pipes and service behavior when available;
 cross-compilation alone is not runtime verification. State any untested portion.
 

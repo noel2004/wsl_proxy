@@ -1,3 +1,3 @@
-// Package target is reserved for Windows resource adapters, starting with the
-// OpenSSH agent named pipe. Windows implementations will use platform build tags.
+// Package target contains Windows resource adapters. Named-pipe connections are
+// independent byte streams; the server does not interpret their application protocol.
 package target

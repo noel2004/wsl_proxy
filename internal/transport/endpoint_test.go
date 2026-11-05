@@ -114,6 +114,11 @@ func TestUDPTransferWithLossAndHalfClose(t *testing.T) {
 	if err != nil || !bytes.Equal(got, want) {
 		t.Fatalf("forward transfer: bytes=%d err=%v", len(got), err)
 	}
+	select {
+	case <-s.Done():
+		t.Fatal("FIN closed the connection failure signal")
+	default:
+	}
 	if err := <-writer; err != nil {
 		t.Fatal(err)
 	}

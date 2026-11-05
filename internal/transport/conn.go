@@ -17,6 +17,7 @@ type Conn struct {
 	state                       *session
 	err                         error
 	changed                     chan struct{}
+	done                        chan struct{}
 	readDeadline, writeDeadline time.Time
 	writeMu                     sync.Mutex
 }
@@ -30,6 +31,21 @@ func (c *Conn) signalLocked() { close(c.changed); c.changed = make(chan struct{}
 func (c *Conn) Target() string       { return c.target }
 func (c *Conn) LocalAddr() net.Addr  { return c.ep.pc.LocalAddr() }
 func (c *Conn) RemoteAddr() net.Addr { return c.peer }
+
+// Done closes on local Close, peer RESET, listener shutdown, or transport failure.
+// FIN alone does not close it. Adapters can use this signal to cancel blocked
+// target I/O even when neither forwarding worker is currently reading the stream.
+func (c *Conn) Done() <-chan struct{} {
+	c.ep.mu.Lock()
+	defer c.ep.mu.Unlock()
+	if c.done == nil {
+		c.done = make(chan struct{})
+		if c.err != nil {
+			close(c.done)
+		}
+	}
+	return c.done
+}
 
 // waitChange releases the state lock while waiting. Deadline changes also signal
 // the channel so blocked calls recalculate timers after waking.
