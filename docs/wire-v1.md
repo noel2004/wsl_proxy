@@ -183,6 +183,11 @@ has not yet been benchmarked.
 
 ## Validation boundary
 
+A separate [Quint lifecycle model](../formal/transport/README.md) checks eventual
+peer closure in a finite established-connection abstraction, assuming scheduler
+progress and finite stale traffic. It is not a proof of the Go implementation,
+sequence wraparound, FIN behavior, or ID reuse.
+
 Deterministic state-machine tests inject packet loss, duplication, reordering,
 slow consumption, and wrapping counters with simulated time. Socket tests exercise
 opening loss, bidirectional transfer, FIN retries, deadlines, peer binding,

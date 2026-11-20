@@ -25,6 +25,7 @@ encoding, lifecycle, and API are specified in [wire-v1.md](wire-v1.md).
 | `internal/service/` | Optional Windows Service lifecycle and logging integration |
 | `internal/testpipe/` | Isolated Windows named-pipe fixtures for runtime tests |
 | `e2e-bench/` | Configurable in-process datagram network, end-to-end benchmark, and transport client usage example |
+| `formal/transport/` | Quint abstraction of established transport lifecycle, fault scenarios, and finite-state liveness checks |
 
 Only `internal/service` remains a reserved package; no service wrapper is implemented.
 Keep the transport testable on Linux without a running Windows host. Use Windows
@@ -55,6 +56,12 @@ go test ./...
 go vet ./...
 go build ./...
 ```
+
+The separate Node project in `formal/` checks the Quint lifecycle model. From that
+directory, run `npm ci` and `npm run check` with Node.js 22+ and Java available.
+TLC checks eventual peer closure under scheduler fairness and finite packet
+lifetime; this is a finite abstraction, not verification of the Go implementation.
+See the [formal model guide](../formal/README.md) for bounds and first results.
 
 `go test -v -count=1 ./e2e-bench` runs the full transport over an in-process
 datagram pair with configurable random loss and Gaussian latency. Edit

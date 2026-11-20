@@ -1,0 +1,5 @@
+node_modules/
+.quint/
+_apalache-out/
+states/
+build/

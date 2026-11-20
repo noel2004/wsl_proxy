@@ -1,0 +1,21 @@
+{
+  "name": "wsl-proxy-formal",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Quint models of the WSL proxy transport",
+  "scripts": {
+    "quint": "QUINT_HOME=.quint quint",
+    "typecheck": "npm run quint -- typecheck transport/transport.qnt && npm run quint -- typecheck transport/scenarios.qnt && npm run quint -- typecheck transport/no_idle.qnt",
+    "test": "npm run quint -- test transport/scenarios.qnt --backend typescript --seed 20261120",
+    "simulate": "npm run quint -- run transport/scenarios.qnt --backend typescript --invariant safety --max-samples 1000 --max-steps 100 --seed 20261120 --verbosity 1",
+    "verify": "npm run quint -- verify transport/transport.qnt --backend tlc --apalache-version 0.62.4 --invariant safety --temporal fair_no_linger,no_reopen --tlc-config tlc.json --verbosity 3",
+    "counterexamples": "node scripts/counterexamples.mjs",
+    "check": "npm run typecheck && npm test && npm run simulate && npm run verify && npm run counterexamples"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@informalsystems/quint": "0.33.1"
+  }
+}

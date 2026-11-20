@@ -139,6 +139,8 @@ remaining stale-packet ambiguity documented in the protocol.
   workflow, and implementation milestones.
 - [Windows SSH-agent findings](docs/windows-ssh-agent.md): named-pipe behavior,
   OpenSSH/1Password compatibility, CLI configuration, and Windows/WSL results.
+- [Formal models](formal/README.md): Quint transport lifecycle model, exhaustive
+  eventual-closure check, assumptions, and counterexamples.
 - [Agent guidance](AGENTS.md): repository instructions for future development.
 
 Start with the protocol before changing transport behavior. The next layers are
