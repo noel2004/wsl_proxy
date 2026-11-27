@@ -1,0 +1,54 @@
+{
+  "name": "Quint",
+  "scopeName": "source.quint",
+  "patterns": [
+    { "name": "comment.line.shebang.quint", "match": "\\A#!.*$" },
+    { "name": "comment.line.documentation.quint", "match": "///.*$" },
+    { "name": "comment.line.double-slash.quint", "match": "//.*$" },
+    { "name": "comment.block.quint", "begin": "/\\*", "end": "\\*/" },
+    { "name": "string.quoted.double.quint", "begin": "\"", "end": "\"" },
+    {
+      "match": "\\b(module|import|export|as)\\s+([A-Za-z_][A-Za-z_0-9]*)",
+      "captures": {
+        "1": { "name": "keyword.control.module.quint" },
+        "2": { "name": "entity.name.namespace.quint" }
+      }
+    },
+    {
+      "match": "\\b(type)\\s+([A-Za-z_][A-Za-z_0-9]*)",
+      "captures": {
+        "1": { "name": "storage.type.quint" },
+        "2": { "name": "entity.name.type.quint" }
+      }
+    },
+    {
+      "match": "\\b(def|action|temporal|run)\\s+([A-Za-z_][A-Za-z_0-9]*(?:::[A-Za-z_][A-Za-z_0-9]*)*)",
+      "captures": {
+        "1": { "name": "storage.type.quint" },
+        "2": { "name": "entity.name.function.quint" }
+      }
+    },
+    {
+      "match": "\\b(const|var|val|nondet|assume)\\s+([A-Za-z_][A-Za-z_0-9]*)",
+      "captures": {
+        "1": { "name": "storage.type.quint" },
+        "2": { "name": "variable.other.definition.quint" }
+      }
+    },
+    { "name": "keyword.control.module.quint", "match": "\\b(?:module|import|export|from|as)\\b" },
+    { "name": "storage.type.quint", "match": "\\b(?:const|var|assume|type|val|def|action|run|temporal|nondet)\\b" },
+    { "name": "storage.modifier.quint", "match": "\\bpure\\b" },
+    { "name": "keyword.control.quint", "match": "\\b(?:if|else|match|all|any)\\b" },
+    { "name": "keyword.operator.logical.quint", "match": "\\b(?:and|or|iff|implies|leadsTo)\\b" },
+    { "name": "constant.language.boolean.quint", "match": "\\b(?:true|false)\\b" },
+    { "name": "constant.numeric.quint", "match": "\\b(?:0x[0-9A-Fa-f](?:_?[0-9A-Fa-f])*|0|[1-9](?:_?[0-9])*)\\b" },
+    { "name": "constant.language.quint", "match": "\\b(?:Nat|Int|Bool|_)\\b" },
+    { "name": "support.type.quint", "match": "\\b(?:int|str|bool|Set|List)\\b" },
+    { "name": "support.function.temporal.quint", "match": "\\b(?:always|eventually|next|orKeep|mustChange|enabled|weakFair|strongFair)\\b" },
+    { "name": "entity.name.namespace.quint", "match": "\\b[A-Za-z_][A-Za-z_0-9]*(?=::)" },
+    { "name": "entity.name.function.quint", "match": "\\b[A-Za-z_][A-Za-z_0-9]*(?=\\s*\\()" },
+    { "name": "keyword.operator.assignment.next-state.quint", "match": "'" },
+    { "name": "keyword.operator.quint", "match": "\\.\\.\\.|=>|->|!=|==|<=|>=|[-+*/%^<>=|]" },
+    { "name": "punctuation.separator.quint", "match": "::|[.,:;]" }
+  ]
+}

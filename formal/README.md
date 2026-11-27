@@ -5,6 +5,25 @@ established connection cannot remain permanently open on only one side, assuming
 the scheduler continues running and old datagrams eventually expire. The model
 is separate from the Go implementation; it is not a refinement proof of Go code.
 
+## Quint syntax highlighting in VS Code
+
+The [local extension](vscode-quint/package.json) associates `.qnt` files with
+Quint. VS Code reads its [TextMate grammar](vscode-quint/syntaxes/quint.tmLanguage.json)
+and editor configuration directly. The installed extension contains only JSON
+and VSIX metadata.
+
+Run both commands from the repository root in your VS Code terminal. Packaging
+uses the Python 3 standard library and works offline.
+
+```sh
+python3 formal/vscode-quint/package_vsix.py
+code --install-extension "$PWD/formal/build/quint-syntax-0.1.0.vsix"
+```
+
+You can also choose **Extensions: Install from VSIX...** in the Command Palette
+and select the same file. Open `formal/transport/core.qnt` and check that the
+language mode in the status bar reads **Quint**.
+
 ## Run from WSL/Linux
 
 Use Node.js 22 or newer, npm, and Java on `PATH` (the initial run used OpenJDK 25).

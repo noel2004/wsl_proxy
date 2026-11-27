@@ -1,0 +1,26 @@
+{
+  "name": "quint-syntax",
+  "displayName": "Quint Syntax (Local)",
+  "description": "Syntax highlighting for Quint specification files.",
+  "version": "0.1.0",
+  "publisher": "wsl-proxy-local",
+  "engines": { "vscode": "^1.70.0" },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "quint",
+        "aliases": ["Quint", "quint"],
+        "extensions": [".qnt"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "quint",
+        "scopeName": "source.quint",
+        "path": "./syntaxes/quint.tmLanguage.json"
+      }
+    ]
+  }
+}
